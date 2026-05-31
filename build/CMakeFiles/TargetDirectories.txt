@@ -1,0 +1,16 @@
+/Users/abhisiktamaitra/cd lab/malloc-checker/build/CMakeFiles/intrinsics_gen.dir
+/Users/abhisiktamaitra/cd lab/malloc-checker/build/CMakeFiles/vt_gen.dir
+/Users/abhisiktamaitra/cd lab/malloc-checker/build/CMakeFiles/omp_gen.dir
+/Users/abhisiktamaitra/cd lab/malloc-checker/build/CMakeFiles/acc_gen.dir
+/Users/abhisiktamaitra/cd lab/malloc-checker/build/CMakeFiles/target_parser_gen.dir
+/Users/abhisiktamaitra/cd lab/malloc-checker/build/CMakeFiles/clang-tablegen-targets.dir
+/Users/abhisiktamaitra/cd lab/malloc-checker/build/CMakeFiles/MallocCheckerPlugin.dir
+/Users/abhisiktamaitra/cd lab/malloc-checker/build/CMakeFiles/install-MallocCheckerPlugin.dir
+/Users/abhisiktamaitra/cd lab/malloc-checker/build/CMakeFiles/install-MallocCheckerPlugin-stripped.dir
+/Users/abhisiktamaitra/cd lab/malloc-checker/build/CMakeFiles/check.dir
+/Users/abhisiktamaitra/cd lab/malloc-checker/build/CMakeFiles/edit_cache.dir
+/Users/abhisiktamaitra/cd lab/malloc-checker/build/CMakeFiles/rebuild_cache.dir
+/Users/abhisiktamaitra/cd lab/malloc-checker/build/CMakeFiles/list_install_components.dir
+/Users/abhisiktamaitra/cd lab/malloc-checker/build/CMakeFiles/install.dir
+/Users/abhisiktamaitra/cd lab/malloc-checker/build/CMakeFiles/install/local.dir
+/Users/abhisiktamaitra/cd lab/malloc-checker/build/CMakeFiles/install/strip.dir

@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>malloc-checker — Output Viewer</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header>
+    <h1>malloc-checker</h1>
+    <p>Clang AST plugin — unchecked malloc / calloc / realloc detection</p>
+    <div class="status-bar" id="status-bar">
+      <span class="status-pill">Loading…</span>
+    </div>
+  </header>
+
+  <main>
+    <section class="panel">
+      <div class="panel-header">
+        <h2>Source code</h2>
+        <div class="toolbar">
+          <select id="sample-select" aria-label="Sample file">
+            <option value="">— sample —</option>
+          </select>
+          <button id="run-btn" type="button">Run checker</button>
+        </div>
+      </div>
+      <textarea id="source" spellcheck="false" placeholder="Paste C code or pick a sample…"></textarea>
+    </section>
+
+    <section class="panel">
+      <div class="panel-header">
+        <h2>Output</h2>
+      </div>
+      <div class="output-body" id="output">
+        <div class="empty-state">Click <strong>Run checker</strong> to analyze the code.</div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const sourceEl = document.getElementById("source");
+    const outputEl = document.getElementById("output");
+    const runBtn = document.getElementById("run-btn");
+    const sampleSelect = document.getElementById("sample-select");
+    const statusBar = document.getElementById("status-bar");
+
+    let samples = [];
+
+    async function loadStatus() {
+      try {
+        const res = await fetch("/api/status");
+        const data = await res.json();
+        statusBar.innerHTML = "";
+        const clang = document.createElement("span");
+        clang.className = "status-pill " + (data.clang ? "ok" : "bad");
+        clang.textContent = data.clang ? `clang: ${data.clang.split("/").pop()}` : "clang: not found";
+        statusBar.appendChild(clang);
+
+        const plugin = document.createElement("span");
+        plugin.className = "status-pill " + (data.plugin_exists ? "ok" : "bad");
+        plugin.textContent = data.plugin_exists ? "plugin: built" : "plugin: missing (run cmake --build)";
+        statusBar.appendChild(plugin);
+      } catch {
+        statusBar.innerHTML = '<span class="status-pill bad">Server offline</span>';
+      }
+    }
+
+    async function loadSamples() {
+      const res = await fetch("/api/samples");
+      const data = await res.json();
+      samples = data.samples || [];
+      sampleSelect.innerHTML = '<option value="">— sample —</option>';
+      samples.forEach((s, i) => {
+        const opt = document.createElement("option");
+        opt.value = String(i);
+        opt.textContent = s.name;
+        sampleSelect.appendChild(opt);
+      });
+      if (samples.length) {
+        sourceEl.value = samples[0].source;
+        sampleSelect.value = "0";
+      }
+    }
+
+    sampleSelect.addEventListener("change", () => {
+      const idx = sampleSelect.value;
+      if (idx !== "" && samples[idx]) {
+        sourceEl.value = samples[idx].source;
+      }
+    });
+
+    function escapeHtml(s) {
+      return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    function renderResult(data) {
+      if (!data.ok) {
+        outputEl.innerHTML = `<div class="error-box">${escapeHtml(data.error || "Unknown error")}</div>`;
+        return;
+      }
+
+      const summaryClass = data.clean ? "ok" : "warn";
+      const summaryLabel = data.clean ? "Clean" : "Warnings";
+
+      let html = `
+        <div class="summary">
+          <div class="summary-card ${summaryClass}">
+            <div class="label">Result</div>
+            <div class="value">${summaryLabel}</div>
+          </div>
+          <div class="summary-card ${summaryClass}">
+            <div class="label">Warnings</div>
+            <div class="value">${data.warning_count}</div>
+          </div>
+        </div>`;
+
+      if (data.stats) {
+        html += `<div class="stats-line">${escapeHtml(data.stats)}</div>`;
+      }
+
+      if (data.warnings.length) {
+        html += "<ul class=\"warning-list\">";
+        for (const w of data.warnings) {
+          const loc = w.file.split("/").pop() + ":" + w.line + ":" + w.col;
+          html += `<li><div class="loc">${escapeHtml(loc)}</div>${escapeHtml(w.message)}</li>`;
+        }
+        html += "</ul>";
+      } else if (data.clean) {
+        html += "<p style=\"color:var(--ok);margin:0 0 1rem;\">No warnings — all allocator returns appear checked.</p>";
+      }
+
+      if (data.output) {
+        html += `<pre id="raw-output">${escapeHtml(data.output)}</pre>`;
+      }
+
+      outputEl.innerHTML = html;
+    }
+
+    runBtn.addEventListener("click", async () => {
+      runBtn.disabled = true;
+      outputEl.innerHTML = '<div class="empty-state">Running checker…</div>';
+      const filename = sampleSelect.value !== "" && samples[sampleSelect.value]
+        ? samples[sampleSelect.value].name
+        : "input.c";
+
+      try {
+        const res = await fetch("/api/check", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ source: sourceEl.value, filename, stats: true }),
+        });
+        renderResult(await res.json());
+      } catch (err) {
+        outputEl.innerHTML = `<div class="error-box">${escapeHtml(String(err))}</div>`;
+      } finally {
+        runBtn.disabled = false;
+      }
+    });
+
+    loadStatus();
+    loadSamples();
+  </script>
+</body>
+</html>
